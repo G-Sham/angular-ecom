@@ -20,6 +20,7 @@ import { UserAuthComponent } from './user-auth/user-auth.component';
 import { CartPageComponent } from './cart-page/cart-page.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { MyOrdersComponent } from './my-orders/my-orders.component';
+import { AccessGraphModule } from './access-graph/access-graph.module';
 
 @NgModule({
   declarations: [
@@ -44,7 +45,8 @@ import { MyOrdersComponent } from './my-orders/my-orders.component';
     FormsModule,
     HttpClientModule,
     FontAwesomeModule,
-    NgbModule
+    NgbModule,
+    AccessGraphModule
   ],
   providers: [],
   bootstrap: [AppComponent]

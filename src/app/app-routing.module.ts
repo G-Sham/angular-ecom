@@ -12,6 +12,7 @@ import { SellerAuthComponent } from './seller-auth/seller-auth.component';
 import { SellerHomeComponent } from './seller-home/seller-home.component';
 import { SellerUpdateProductComponent } from './seller-update-product/seller-update-product.component';
 import { UserAuthComponent } from './user-auth/user-auth.component';
+import { AccessGraphDashboardComponent } from './access-graph/access-graph-dashboard/access-graph-dashboard.component';
 
 const routes: Routes = [
   {
@@ -53,6 +54,9 @@ const routes: Routes = [
   },{
     component:MyOrdersComponent,
     path:'my-orders'
+  },{
+    component:AccessGraphDashboardComponent,
+    path:'access-graph-dashboard'
   }
 ];
 

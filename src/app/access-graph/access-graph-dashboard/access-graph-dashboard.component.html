@@ -1,0 +1,188 @@
+<div class="access-graph-dashboard">
+  <div class="dashboard-header">
+    <h1>Access Graph Dashboard</h1>
+    <div class="header-actions">
+      <button
+        class="btn btn-primary"
+        [class.active]="displayMode === 'graph'"
+        (click)="toggleDisplayMode('graph')"
+      >
+        Graph View
+      </button>
+      <button
+        class="btn btn-primary"
+        [class.active]="displayMode === 'table'"
+        (click)="toggleDisplayMode('table')"
+      >
+        Table View
+      </button>
+      <button class="btn btn-success" (click)="exportGraph()">
+        Export Graph
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="summary-stats" *ngIf="getAccessSummary() as summary">
+    <div class="stat-card">
+      <h3>{{ summary.totalIdentities }}</h3>
+      <p>Identities</p>
+    </div>
+    <div class="stat-card">
+      <h3>{{ summary.totalRoles }}</h3>
+      <p>Roles</p>
+    </div>
+    <div class="stat-card">
+      <h3>{{ summary.totalResources }}</h3>
+      <p>Resources</p>
+    </div>
+    <div class="stat-card">
+      <h3>{{ summary.totalAccessRules }}</h3>
+      <p>Access Rules</p>
+    </div>
+  </div>
+
+  <!-- Graph View -->
+  <div class="graph-view" *ngIf="displayMode === 'graph'">
+    <div class="graph-container">
+      <h2>Access Graph Visualization</h2>
+      <svg width="100%" height="600" class="graph-svg">
+        <!-- Edges/Links -->
+        <g class="links">
+          <line
+            *ngFor="let edge of edges"
+            [attr.x1]="nodes.find(n => n.id === edge.source)?.x || 100"
+            [attr.y1]="nodes.find(n => n.id === edge.source)?.y || 100"
+            [attr.x2]="nodes.find(n => n.id === edge.target)?.x || 200"
+            [attr.y2]="nodes.find(n => n.id === edge.target)?.y || 200"
+            class="link"
+            [class.active]="selectedEdge?.id === edge.id"
+            (click)="selectEdge(edge)"
+          />
+        </g>
+
+        <!-- Nodes -->
+        <g class="nodes">
+          <circle
+            *ngFor="let node of nodes; let i = index"
+            [attr.cx]="node.x || 100 + (i % 5) * 150"
+            [attr.cy]="node.y || 100 + Math.floor(i / 5) * 150"
+            r="20"
+            [attr.fill]="getNodeColor(node)"
+            class="node"
+            [class.active]="selectedNode?.id === node.id"
+            (click)="selectNode(node)"
+          />
+          <text
+            *ngFor="let node of nodes; let i = index"
+            [attr.x]="node.x || 100 + (i % 5) * 150"
+            [attr.y]="node.y || 100 + Math.floor(i / 5) * 150 + 5"
+            text-anchor="middle"
+            class="node-label"
+          >
+            {{ node.label.substring(0, 3) }}
+          </text>
+        </g>
+      </svg>
+
+      <!-- Legend -->
+      <div class="graph-legend">
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #4CAF50"></span>
+          <span>Identity</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #2196F3"></span>
+          <span>Role</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #FF9800"></span>
+          <span>Resource</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected Node Details -->
+    <div class="details-panel" *ngIf="selectedNode">
+      <h3>Details: {{ selectedNode.label }}</h3>
+      <div class="details-content">
+        <p><strong>Type:</strong> {{ selectedNode.type }}</p>
+        <pre>{{ selectedNode.data | json }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <div class="table-view" *ngIf="displayMode === 'table'">
+    <h2>Identities & Permissions</h2>
+    <div class="table-wrapper">
+      <table class="access-table">
+        <thead>
+          <tr>
+            <th>Identity</th>
+            <th>Type</th>
+            <th>Role</th>
+            <th>Permissions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of identitiesWithPermissions">
+            <td>
+              <strong>{{ item.identity.name }}</strong><br />
+              <small>{{ item.identity.email }}</small>
+            </td>
+            <td>
+              <span class="badge" [style.background-color]="getRoleColor(item.identity.type)">
+                {{ item.identity.type }}
+              </span>
+            </td>
+            <td>
+              <span class="badge badge-primary">
+                {{ item.role }}
+              </span>
+            </td>
+            <td>
+              <div class="permissions-list">
+                <div *ngFor="let perm of item.permissions" class="permission-item">
+                  <strong>{{ perm.resource }}:</strong> {{ perm.permissions }}
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Roles & Resources Reference -->
+  <div class="reference-section">
+    <div class="roles-section">
+      <h3>System Roles</h3>
+      <div class="roles-grid">
+        <div class="role-card" *ngFor="let role of accessGraph?.roles">
+          <h4 [style.border-left]="'4px solid ' + getRoleColor(role.name)">
+            {{ role.display }}
+          </h4>
+          <p>{{ role.description }}</p>
+          <div class="role-details">
+            <strong>Permissions:</strong>
+            <div class="tags">
+              <span class="tag" *ngFor="let perm of role.permissions">{{ perm }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="resources-section">
+      <h3>System Resources</h3>
+      <div class="resources-grid">
+        <div class="resource-card" *ngFor="let resource of accessGraph?.resources">
+          <h4>{{ resource.name }}</h4>
+          <p>{{ resource.description }}</p>
+          <small>Type: {{ resource.type }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
